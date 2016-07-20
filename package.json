@@ -1,0 +1,25 @@
+{
+  "name": "contracts-go-backend",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/contracts-go/backend.git"
+  },
+  "keywords": [
+    "Contracts",
+    "GO",
+    "NDA"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/contracts-go/backend/issues"
+  },
+  "homepage": "https://github.com/contracts-go/backend#readme"
+}
