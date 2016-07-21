@@ -9,6 +9,7 @@ const PI = require('./models/PI');
 const Project = require('./models/Project');
 const Company = require('./models/Company');
 
+const fs = require('fs');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const express = require('express');
@@ -20,8 +21,10 @@ app.set('env', config.env);
 // Stores application/json in request's body
 app.use(bodyParser.json());
 
+// Logs http requests made to server
 if (app.get('env') === 'production') {
-  app.use(morgan('combined'));
+  const logFile = fs.createWriteStream('./access.log', { flags: 'a' });
+  app.use(morgan('combined', { stream: logFile }));
 } else {
   app.use(morgan('dev'));
 }
@@ -54,8 +57,6 @@ app.post('/generate', (req, res, next) => {
   }
 });
 
-
-// Logs http requests made to server
 if (app.get('env') === 'production') {
   // PRODUCTION
 

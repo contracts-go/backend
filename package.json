@@ -3,8 +3,11 @@
   "version": "0.0.1",
   "description": "Contracts -- gone!",
   "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
-    "test": "npm test",
+    "test": "node_modules/.bin/mocha",
     "doc-api": "node_modules/.bin/apidoc-swagger -i server.js -o docs/",
     "lint": "node_modules/.bin/eslint .",
     "start": "node server.js"
@@ -33,10 +36,13 @@
     "morgan": "^1.7.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "eslint": "^3.1.1",
     "eslint-config-airbnb": "^9.0.1",
     "eslint-plugin-import": "^1.11.1",
     "eslint-plugin-jsx-a11y": "^2.0.1",
-    "eslint-plugin-react": "^5.2.2"
+    "eslint-plugin-react": "^5.2.2",
+    "mocha": "^2.5.3",
+    "supertest": "^1.2.0"
   }
 }
