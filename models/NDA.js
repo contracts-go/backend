@@ -4,7 +4,7 @@
 
 const templates = require('../templates/templates');
 const moment = require('moment');
-const dateFormat = 'Do of MMMM, YYYY';
+const dateFormat = 'Do day of MMMM, YYYY';  // The 14th day of July, 2016
 
 /**
  *
@@ -27,18 +27,21 @@ class NDA {
     this.otherEntities = otherEntities;
     this.date = date;
 
+    let error;
     switch (this.type) {
       case 'mutual':
         this.template = templates['stevens-mutual'];
         break;
-      case 'recipient':
-        this.template = templates['stevens-recipient'];
+      case 'receiving':
+        this.template = templates['stevens-receiving'];
         break;
       case 'disclosing':
         this.template = templates['stevens-disclosing'];
         break;
       default:
-        throw new Error('NDAs must be either mutual, recipient, or disclosing');
+        error = new Error('NDAs must be either mutual, recipient, or disclosing');
+        error.status = 400;
+        throw error;
     }
   }
 

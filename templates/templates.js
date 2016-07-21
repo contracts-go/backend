@@ -6,7 +6,12 @@ const handlebars = require('handlebars');
 const fs = require('fs');
 
 const templates = {
-  'stevens-mutual': handlebars.compile(fs.readFileSync(`${__dirname}/stevens-mutual.hbs`, 'utf8')),
+  'stevens-mutual': handlebars.compile(fs.readFileSync(
+    `${__dirname}/stevens-mutual.hbs`, 'utf8')),
+  'stevens-disclosing': handlebars.compile(
+    fs.readFileSync(`${__dirname}/stevens-disclosing.hbs`, 'utf8')),
+  'stevens-receiving': handlebars.compile(
+    fs.readFileSync(`${__dirname}/stevens-receiving.hbs`, 'utf8')),
 };
 
 module.exports = templates;

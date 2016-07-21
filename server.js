@@ -14,30 +14,71 @@ const morgan = require('morgan');
 const express = require('express');
 const app = express();
 
+app.set('env', config.env);
+
+// Middleware for the API
+// Stores application/json in request's body
 app.use(bodyParser.json());
 
-if (config.env === 'prod') {
+if (app.get('env') === 'production') {
   app.use(morgan('combined'));
 } else {
   app.use(morgan('dev'));
 }
 
-app.post('/generate', (req, res) => {
+/**
+ * @api {post} /generate
+ *
+ * @apiSuccess {string} nda
+ */
+app.post('/generate', (req, res, next) => {
   const data = req.body;
-  const pi = new PI(data.pi.name, data.pi.title);
-  const company = new Company(
-    data.company.type, data.company.name, data.company.state, data.company.location);
-  const project = new Project(data.project.industry, data.project.description);
   let date;
+
   if (data.date) {
     date = new Date(data.date);
   } else {
     date = new Date();
   }
-  const nda = new NDA('mutual', pi, company, project, date);
-  res.status(200).send({ nda: nda.generate() });
+
+  try {
+    const ndaType = data.type;
+    const pi = new PI(data.pi.name, data.pi.title);
+    const company = new Company(
+      data.company.type, data.company.name, data.company.state, data.company.location);
+    const project = new Project(data.project.industry, data.project.description);
+    const nda = new NDA(ndaType, pi, company, project, date);
+    res.status(200).send({ nda: nda.generate() });
+  } catch (err) {
+    return next(err);
+  }
 });
 
+
+// Logs http requests made to server
+if (app.get('env') === 'production') {
+  // PRODUCTION
+
+  // Error handler
+  //  Don't send the stack back
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).send({
+      message: err.message,
+      error: {},
+    });
+  });
+} else {
+  // DEVELOPMENT
+  // Error handler
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).send({
+      message: err.message,
+      error: err.stack,
+    });
+  });
+}
+
+// Runs the app
 app.listen(config.port, () => {
   console.log(`Running on port   ${config.port}`);
 });
