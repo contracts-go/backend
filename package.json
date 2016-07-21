@@ -1,10 +1,11 @@
 {
   "name": "contracts-go-backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "Contracts -- gone!",
   "main": "server.js",
   "scripts": {
     "test": "npm test",
+    "lint": "node_modules/.bin/eslint .",
     "start": "node server.js"
   },
   "repository": {
@@ -21,5 +22,20 @@
   "bugs": {
     "url": "https://github.com/contracts-go/backend/issues"
   },
-  "homepage": "https://github.com/contracts-go/backend#readme"
+  "homepage": "https://github.com/contracts-go/backend#readme",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "fs": "0.0.2",
+    "handlebars": "^4.0.5",
+    "moment": "^2.14.1",
+    "morgan": "^1.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.1.1",
+    "eslint-config-airbnb": "^9.0.1",
+    "eslint-plugin-import": "^1.11.1",
+    "eslint-plugin-jsx-a11y": "^2.0.1",
+    "eslint-plugin-react": "^5.2.2"
+  }
 }
