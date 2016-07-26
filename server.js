@@ -53,6 +53,10 @@ app.post('/generate', (req, res, next) => {
     const nda = new NDA(ndaType, pi, company, project, date);
     res.status(200).send({ nda: nda.generate() });
   } catch (err) {
+    if (err instanceof TypeError) {
+      // If the problem is missing data in the request, mark as a BAD REQUEST
+      err.status = 400;
+    }
     return next(err);
   }
 });
@@ -80,6 +84,9 @@ if (app.get('env') === 'production') {
 }
 
 // Runs the app
-app.listen(config.port, () => {
+const server = app.listen(config.port, () => {
   console.log(`Running on port   ${config.port}`);
 });
+
+// Exported for unit testing
+module.exports = server;

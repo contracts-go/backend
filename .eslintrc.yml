@@ -2,6 +2,8 @@ root: true
 
 env:
     node: true
+    es6: true
+    mocha: true
 
 extends:
     "airbnb"
@@ -13,3 +15,4 @@ rules:
   consistent-return: 1
   no-unused-vars: 1
   no-undef: 1
+  no-unused-expressions: 1
