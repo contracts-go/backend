@@ -2,14 +2,17 @@
  * Created by austin on 7/20/16.
  */
 
-class PI {
+const User = require('./User');
+
+class PI extends User {
     /**
      *
      * @param name
      * @param title
+     * @param email
      */
-  constructor(name, title) {
-    this.name = name;
+  constructor(name, title, email) {
+    super(name, email);
     this.title = title;
   }
 }

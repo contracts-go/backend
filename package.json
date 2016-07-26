@@ -29,19 +29,22 @@
   "homepage": "https://github.com/contracts-go/backend#readme",
   "dependencies": {
     "body-parser": "^1.15.2",
+    "cors": "^2.7.1",
     "express": "^4.14.0",
     "fs": "0.0.2",
     "handlebars": "^4.0.5",
     "moment": "^2.14.1",
-    "morgan": "^1.7.0"
+    "morgan": "^1.7.0",
+    "nodemailer": "^2.5.0",
+    "officegen": "^0.2.10"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-http": "^3.0.0",
-    "eslint": "^3.1.1",
+    "eslint": "^2.13.1",
     "eslint-config-airbnb": "^9.0.1",
     "eslint-plugin-import": "^1.11.1",
-    "eslint-plugin-jsx-a11y": "^2.0.1",
+    "eslint-plugin-jsx-a11y": "^1.5.5",
     "eslint-plugin-react": "^5.2.2",
     "mocha": "^2.5.3",
     "really-need": "^1.9.2",
