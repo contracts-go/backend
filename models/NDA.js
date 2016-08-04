@@ -49,7 +49,7 @@ class NDA {
    * Fills the template with the information
    * @returns {string}
    */
-  generate() {
+  generateHTML() {
     return this.template({
       pi: this.pi,
       company: this.company,
