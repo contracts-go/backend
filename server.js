@@ -14,6 +14,7 @@ const User = require('./models/User');
 
 const fs = require('fs');
 const officegen = require('officegen');
+const htmlToDox = require('html-docx-js');
 const nodemailer = require('nodemailer');
 const emailTemplater = require('./email-templates/email-templates');
 const bodyParser = require('body-parser');
@@ -75,15 +76,17 @@ function sendMail(mail) {
 }
 
 /**
- * @api {post} /generate
+ * @api {post} /generateHTML
  *
  * @apiSuccess {string} nda
  * @apiError
  */
-app.post('/generate', (req, res, next) => {
+app.post('/generateHTML', (req, res, next) => {
   const data = req.body;
   let nda;
   let date;
+
+  // Data section
 
   // Defaults to today
   if (data.date) {
@@ -117,17 +120,18 @@ app.post('/generate', (req, res, next) => {
     }
     return next(err);
   }
-
-  const ndaText = nda.generate();
-  // Send an email with the NDA if supplied
+  const ndaText = nda.generateHTML();
+  // Email Section
   if (data.emailTo) {
     const admin = new User(data.emailTo.name, data.emailTo.email);
     const doc = officegen('docx');
 
-    // Create the nda
+    // Create the nda page
+    const wordText = htmlToDox.asBlob(new Buffer(ndaText));
     const page = doc.createP();
-    page.addText(ndaText);
+    page.addText(wordText);
 
+    // Create a .docx temporary file
     const docFile = fs.createWriteStream(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`);
 
     doc.on('error', (error) => {
@@ -165,7 +169,7 @@ app.post('/generate', (req, res, next) => {
         fs.unlinkSync(docFile.path);
       });
     });
-    doc.generate(docFile);
+    doc.generateHTML(docFile);
   }
 
   res.status(200).send({ nda: ndaText });

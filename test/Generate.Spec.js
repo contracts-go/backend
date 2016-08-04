@@ -30,7 +30,7 @@ describe('Generate NDA', () => {
 
   it('should throw an error if no type is supplied', (done) => {
     chai.request(server)
-      .post('/generate')
+      .post('/generateHTML')
       .send()
       .end((err, res) => {
         res.should.have.status(400);
@@ -39,7 +39,7 @@ describe('Generate NDA', () => {
   });
   it('should return a filled in document when given good data', (done) => {
     chai.request(server)
-      .post('/generate')
+      .post('/generateHTML')
       .send(goodData)
       .end((err, res) => {
         res.should.be.ok;
