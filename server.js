@@ -5,18 +5,20 @@
 // Load the config files. Keep the passwords in the private.config.json
 const config = require('./config.json');
 const privateConfig = require('./private.config.json');
-
+// Data Models
 const NDA = require('./models/NDA');
 const PI = require('./models/PI');
 const Project = require('./models/Project');
 const Company = require('./models/Company');
 const User = require('./models/User');
-
+// Files / emails
 const fs = require('fs');
 const officegen = require('officegen');
 const htmlToDocx = require('html-docx-js');
+const pdc = require('pdc');
 const nodemailer = require('nodemailer');
 const emailTemplater = require('./email-templates/email-templates');
+// Server
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -132,13 +134,29 @@ app.post('/generate', (req, res, next) => {
     const doc = officegen('docx');
 
     // Create the nda page
-    const wordBuffer = htmlToDocx.asBlob(ndaText);
+    /*const wordBuffer = htmlToDocx.asBlob(ndaText);
+    const newFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
+
+    const file = fs.writeFileSync(newFileName, '', 'binary');
+    pdc(ndaText, 'html', 'docx', [`-o ${newFileName}`], (err, res) => {
+      console.log(err);
+      console.log(res);
+    });
+    fs.writeFile(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`, wordBuffer, (err) => {
+      if (err) throw err;
+    });*/
+
     // Create a .docx temporary file
+    doc.on('error', (error) => {
+      console.log(error);
+    });
     const docFile = fs.createWriteStream(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`);
-    docFile.once('open', () => {
+    /*docFile.once('open', () => {
       docFile.write(wordBuffer);
       docFile.end();
-    });
+    });*/
+
+    // Event handlers
     docFile.on('error', (error) => {
       console.log(error);
     });
@@ -164,16 +182,21 @@ app.post('/generate', (req, res, next) => {
       }).then(() => {
         // Success. Delete the file
         console.log('Sent email');
-        // fs.unlinkSync(docFile.path);
+        fs.unlinkSync(docFile.path);
         res.status(200).send({ nda: ndaText });
       }).catch((error) => {
         // Error. Log The error and Delete the file
         console.log(`Error sending email: ${error}`);
-        // fs.unlinkSync(docFile.path);
+        fs.unlinkSync(docFile.path);
         // Handle the Error
         return next(error);
       });
     });
+
+    // Actually generate the document
+    const page = doc.createP();
+    page.addText(ndaText);
+    doc.generate(docFile);
   } else {
     res.status(200).send({ nda: ndaText });
   }
