@@ -94,7 +94,7 @@ app.post('/generate', (req, res, next) => {
   // Create the NDA
   try {
     const ndaType = data.type;
-    const pi = new PI(data.pi.name, data.pi.title);
+    const pi = new PI(data.pi.name, data.pi.title, data.pi.email);
     const company = new Company(
       data.company.type,
       data.company.name,
