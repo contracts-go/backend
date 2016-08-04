@@ -198,5 +198,5 @@ const server = app.listen(config.port, () => {
   console.log(`Running on port   ${config.port}`);
 });
 
-// Exported for unit testing
+// Exported for unit testing and others
 module.exports = server;
