@@ -14,7 +14,7 @@ const User = require('./models/User');
 
 const fs = require('fs');
 const officegen = require('officegen');
-const htmlToDox = require('html-docx-js');
+const htmlToDocx = require('html-docx-js');
 const nodemailer = require('nodemailer');
 const emailTemplater = require('./email-templates/email-templates');
 const bodyParser = require('body-parser');
@@ -60,6 +60,11 @@ emailTransporter.verify((err, success) => {
 });
 */
 
+// Create the tmp directory to store the ndas for emailing
+if (!fs.existsSync(`${__dirname}/tmp`)) {
+  fs.mkdirSync(`${__dirname}/tmp`);
+}
+
 /**
  * @see http://nodemailer.com/2-0-0-beta/setup-smtp/
  * @param mail
@@ -81,7 +86,7 @@ function sendMail(mail) {
  * @apiSuccess {string} nda
  * @apiError
  */
-app.post('/generateHTML', (req, res, next) => {
+app.post('/generate', (req, res, next) => {
   const data = req.body;
   let nda;
   let date;
@@ -127,15 +132,12 @@ app.post('/generateHTML', (req, res, next) => {
     const doc = officegen('docx');
 
     // Create the nda page
-    const wordText = htmlToDox.asBlob(new Buffer(ndaText));
-    const page = doc.createP();
-    page.addText(wordText);
-
+    const wordBuffer = htmlToDocx.asBlob(ndaText);
     // Create a .docx temporary file
     const docFile = fs.createWriteStream(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`);
-
-    doc.on('error', (error) => {
-      console.log(error);
+    docFile.once('open', () => {
+      docFile.write(wordBuffer);
+      docFile.end();
     });
     docFile.on('error', (error) => {
       console.log(error);
@@ -162,17 +164,19 @@ app.post('/generateHTML', (req, res, next) => {
       }).then(() => {
         // Success. Delete the file
         console.log('Sent email');
-        fs.unlinkSync(docFile.path);
+        // fs.unlinkSync(docFile.path);
+        res.status(200).send({ nda: ndaText });
       }).catch((error) => {
         // Error. Log The error and Delete the file
         console.log(`Error sending email: ${error}`);
-        fs.unlinkSync(docFile.path);
+        // fs.unlinkSync(docFile.path);
+        // Handle the Error
+        return next(error);
       });
     });
-    doc.generateHTML(docFile);
+  } else {
+    res.status(200).send({ nda: ndaText });
   }
-
-  res.status(200).send({ nda: ndaText });
 });
 
 if (app.get('env') === 'production') {
