@@ -39,7 +39,7 @@ class NDA {
         this.template = templates['stevens-disclosing'];
         break;
       default:
-        error = new Error('NDAs must be either mutual, recipient, or disclosing');
+        error = new Error('NDAs must be either mutual, receiving, or disclosing');
         error.status = 400;
         throw error;
     }

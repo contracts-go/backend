@@ -67,9 +67,10 @@ function sendMail(mail) {
   return emailTransporter.sendMail({
     from: privateConfig.mail.username,
     to: mail.to,
+    cc: mail.cc,
     subject: mail.subject,
     html: mail.html,
-    attachments: mail.attachments
+    attachments: mail.attachments,
   });
 }
 
@@ -138,6 +139,7 @@ app.post('/generate', (req, res, next) => {
       sendMail({
         to: admin.email,
         subject: `New NDA Request from ${data.pi.name}`,
+        cc: data.pi.email,
         html: emailTemplater['new-nda']({
           company: nda.company,
           pi: nda.pi,
