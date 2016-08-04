@@ -5,7 +5,9 @@
 const handlebars = require('handlebars');
 const fs = require('fs');
 
-handlebars.registerPartial('signPartial', `${__dirname}/stevens-sign-partial.hbs`);
+handlebars.registerPartial('signPartial', fs.readFileSync(
+    `${__dirname}/stevens-sign-partial.hbs`, 'utf8'
+));
 
 const templates = {
   'stevens-mutual': handlebars.compile(fs.readFileSync(

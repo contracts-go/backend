@@ -14,12 +14,17 @@ describe('Generate NDA', () => {
     pi: {
       name: 'Austin Cawley-Edwards',
       title: 'Chief Jokes Officer',
+      email: 'austin.cawley@gmail.com',
     },
     company: {
       type: 'LLC',
       name: 'Ten Characters',
       state: 'Company State',
       location: '221 River Street, Hoboken, New Jersey',
+      contact: {
+        name: 'Austin',
+        email: 'austin@austin.me',
+      },
     },
     project: {
       industry: 'Contracts Contracts Contracts',
@@ -30,7 +35,7 @@ describe('Generate NDA', () => {
 
   it('should throw an error if no type is supplied', (done) => {
     chai.request(server)
-      .post('/generateHTML')
+      .post('/generate')
       .send()
       .end((err, res) => {
         res.should.have.status(400);
@@ -39,7 +44,7 @@ describe('Generate NDA', () => {
   });
   it('should return a filled in document when given good data', (done) => {
     chai.request(server)
-      .post('/generateHTML')
+      .post('/generate')
       .send(goodData)
       .end((err, res) => {
         res.should.be.ok;
