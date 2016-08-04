@@ -78,6 +78,7 @@ function sendMail(mail) {
  * @api {post} /generate
  *
  * @apiSuccess {string} nda
+ * @apiError
  */
 app.post('/generate', (req, res, next) => {
   const data = req.body;
@@ -94,7 +95,7 @@ app.post('/generate', (req, res, next) => {
   // Create the NDA
   try {
     const ndaType = data.type;
-    const pi = new PI(data.pi.name, data.pi.title);
+    const pi = new PI(data.pi.name, data.pi.title, data.pi.email);
     const company = new Company(
       data.company.type,
       data.company.name,
@@ -123,6 +124,7 @@ app.post('/generate', (req, res, next) => {
     const admin = new User(data.emailTo.name, data.emailTo.email);
     const doc = officegen('docx');
 
+    // Create the nda
     const page = doc.createP();
     page.addText(ndaText);
 
@@ -131,7 +133,6 @@ app.post('/generate', (req, res, next) => {
     doc.on('error', (error) => {
       console.log(error);
     });
-
     docFile.on('error', (error) => {
       console.log(error);
     });
@@ -150,16 +151,18 @@ app.post('/generate', (req, res, next) => {
         }),
         attachments: [
           {
-            filename: 'nda.docx',
+            filename: `nda-${data.pi.name}-${(new Date()).toDateString()}.docx`,
             content: fs.createReadStream(docFile.path),
           },
         ],
       }).then(() => {
-        // Success
+        // Success. Delete the file
         console.log('Sent email');
+        fs.unlinkSync(docFile.path);
       }).catch((error) => {
-        // Error
+        // Error. Log The error and Delete the file
         console.log(`Error sending email: ${error}`);
+        fs.unlinkSync(docFile.path);
       });
     });
     doc.generate(docFile);
