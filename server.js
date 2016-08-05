@@ -13,9 +13,7 @@ const Company = require('./models/Company');
 const User = require('./models/User');
 // Files / emails
 const fs = require('fs');
-const officegen = require('officegen');
 const htmlToDocx = require('html-docx-js');
-const pdc = require('pdc');
 const nodemailer = require('nodemailer');
 const emailTemplater = require('./email-templates/email-templates');
 // Server
@@ -125,36 +123,35 @@ app.post('/generate', (req, res, next) => {
         console.log(err);
       }
     }
-    return next(err);
+    throw err;
   }
   const ndaText = nda.generateHTML();
   // Email Section
   if (data.emailTo) {
     const admin = new User(data.emailTo.name, data.emailTo.email);
+
+    /* Old -- not using offigen anymore?
     const doc = officegen('docx');
+    // Actually generate the document
+    const page = doc.createP();
+    page.addText(ndaText);
+    doc.generate(docFile);
+
+     doc.on('error', (error) => {
+      console.log(error);
+     });
+    */
 
     // Create the nda page
-    /*const wordBuffer = htmlToDocx.asBlob(ndaText);
+    const wordBuffer = htmlToDocx.asBlob(ndaText);
     const newFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
 
-    const file = fs.writeFileSync(newFileName, '', 'binary');
-    pdc(ndaText, 'html', 'docx', [`-o ${newFileName}`], (err, res) => {
-      console.log(err);
-      console.log(res);
-    });
-    fs.writeFile(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`, wordBuffer, (err) => {
-      if (err) throw err;
-    });*/
-
     // Create a .docx temporary file
-    doc.on('error', (error) => {
-      console.log(error);
-    });
-    const docFile = fs.createWriteStream(`${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`);
-    /*docFile.once('open', () => {
+    const docFile = fs.createWriteStream(newFileName);
+    docFile.once('open', () => {
       docFile.write(wordBuffer);
       docFile.end();
-    });*/
+    });
 
     // Event handlers
     docFile.on('error', (error) => {
@@ -188,15 +185,9 @@ app.post('/generate', (req, res, next) => {
         // Error. Log The error and Delete the file
         console.log(`Error sending email: ${error}`);
         fs.unlinkSync(docFile.path);
-        // Handle the Error
-        return next(error);
+        throw error;  // Sends error to handler
       });
     });
-
-    // Actually generate the document
-    const page = doc.createP();
-    page.addText(ndaText);
-    doc.generate(docFile);
   } else {
     res.status(200).send({ nda: ndaText });
   }
@@ -204,13 +195,11 @@ app.post('/generate', (req, res, next) => {
 
 if (app.get('env') === 'production') {
   // PRODUCTION
-
   // Error handler
-  //  Don't send the stack back
   app.use((err, req, res, next) => {
     res.status(err.status || 500).send({
       message: err.message,
-      error: {},
+      error: {}, //  Don't send the stack back
     });
   });
 } else {

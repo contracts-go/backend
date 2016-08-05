@@ -12,7 +12,6 @@ rules:
   no-console: 0
 #  Sometimes ya just gotta use them. Sorry @airbnb
   no-trailing-spaces: 1
-  consistent-return: 1
   no-unused-vars: 1
   no-undef: 1
   no-unused-expressions: 1
