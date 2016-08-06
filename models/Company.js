@@ -4,6 +4,29 @@
 
 const User = require('./User');
 
+/**
+ * @swagger
+ * definition:
+ *   Company:
+ *     required:
+ *       - type
+ *       - name
+ *       - state
+ *       - location
+ *       - contact
+ *     properties:
+ *       type:
+ *         type: string
+ *       name:
+ *         type: string
+ *       state:
+ *         type: string
+ *       location:
+ *         type: string
+ *       contact:
+ *         $ref: '#/definitions/User'
+ *
+ */
 class Company {
     /**
      *

@@ -20,16 +20,40 @@ const emailTemplater = require('./email-templates/email-templates');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
-const app = require('express')();
+const express = require('express');
+const app = express();
+// Documentation
+const swagger = require('swagger-jsdoc');
+
+const swaggerDef = {
+  info: {
+    title: 'Contracts-Go Api',
+    description: 'The Contracts-Go Api',
+    version: '1.0.0',
+  },
+  host: `${config.basePath}:${config.port}`,
+};
+const swaggerOpts = {
+  swaggerDefinition: swaggerDef,
+  apis: ['./server.js', './models/*.js'],
+};
+const swaggerSpec = swagger(swaggerOpts);
 
 app.set('env', config.env);
 
 // Middleware for the API
 // Stores urlencoded and application/json into the request's body
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: true }));
 // Allow Cross Origin Requests
 app.use(cors());
+
+// ROUTES
+
+// Serve swagger docs the way you like (Recommendation: swagger-tools)
+app.get('/api-docs.json', (req, res) => {
+  res.send(swaggerSpec);
+});
 
 // Logs http requests made to server
 if (app.get('env') === 'production') {
@@ -50,15 +74,6 @@ const smtpConfig = {
   },
 };
 const emailTransporter = nodemailer.createTransport(smtpConfig);
-/*
-emailTransporter.verify((err, success) => {
-  if (err) {
-    console.log('Problem verifying the email transport!');
-  } else {
-    console.log('Successfully verified the email transport!');
-  }
-});
-*/
 
 // Create the tmp directory to store the ndas for emailing
 if (!fs.existsSync(`${__dirname}/tmp`)) {
@@ -81,10 +96,47 @@ function sendMail(mail) {
 }
 
 /**
- * @api {post} /generateHTML
+ * @swagger
+ * parameter:
+ *  generateBody:
+ *    name: generateBody
+ *    description: Body for the generate request.
+ *    in: body
+ *    required: true
+ *    schema:
+ *      type: object
  *
- * @apiSuccess {string} nda
- * @apiError
+ */
+
+/**
+ * @swagger
+ * /generate:
+ *  post:
+ *    description: Generate and email a NDA Document
+ *    produces:
+ *      - application/json
+ *    parameters:
+ *       - name: company
+ *         description: Company involved.
+ *         in: body
+ *         required: true
+ *         schema:
+ *          $ref: '#/definitions/Company'
+ *       - name: pi
+ *         description: PI involved.
+ *         in: body
+ *         required: true
+ *         schema:
+ *          $ref: '#/definitions/PI'
+ *       - name: emailTo
+ *         description: The contact/admin to email the generated document to.
+ *         in: body
+ *         required: false
+ *         schema:
+ *          $ref: '#/definitions/User'
+ *    responses:
+ *      200:
+ *        description: Document created
  */
 app.post('/generate', (req, res, next) => {
   const data = req.body;
@@ -130,18 +182,6 @@ app.post('/generate', (req, res, next) => {
   if (data.emailTo) {
     const admin = new User(data.emailTo.name, data.emailTo.email);
 
-    /* Old -- not using offigen anymore?
-    const doc = officegen('docx');
-    // Actually generate the document
-    const page = doc.createP();
-    page.addText(ndaText);
-    doc.generate(docFile);
-
-     doc.on('error', (error) => {
-      console.log(error);
-     });
-    */
-
     // Create the nda page
     const wordBuffer = htmlToDocx.asBlob(ndaText);
     const newFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
@@ -180,7 +220,7 @@ app.post('/generate', (req, res, next) => {
         // Success. Delete the file
         console.log('Sent email');
         fs.unlinkSync(docFile.path);
-        res.status(200).send({ nda: ndaText });
+        res.status(201).send({ nda: ndaText });
       }).catch((error) => {
         // Error. Log The error and Delete the file
         console.log(`Error sending email: ${error}`);
@@ -189,10 +229,12 @@ app.post('/generate', (req, res, next) => {
       });
     });
   } else {
-    res.status(200).send({ nda: ndaText });
+    res.status(201).send({ nda: ndaText });
   }
 });
 
+
+// Error handling must be put at the end (?)
 if (app.get('env') === 'production') {
   // PRODUCTION
   // Error handler

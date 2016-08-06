@@ -7,6 +7,34 @@ const moment = require('moment');
 const dateFormat = 'Do day of MMMM, YYYY';  // The 14th day of July, 2016
 
 /**
+ * @swagger
+ * definition:
+ *   NDA:
+ *     required:
+ *       - type
+ *       - pi
+ *       - company
+ *       - project
+ *       - date
+ *     properties:
+ *       type:
+ *         type: string
+ *         enum:
+ *         - mutual
+ *         - receiving
+ *         - disclosing
+ *       pi:
+ *         $ref: '#/definitions/PI'
+ *       company:
+ *         $ref: '#/definitions/Company'
+ *       project:
+ *         $ref: '#/definitions/User'
+ *       date:
+ *         type: string
+ *         format: date
+ *         description: 'Defaults to current time'
+ *       otherEntities:
+ *         type: string
  *
  */
 class NDA {
@@ -25,7 +53,7 @@ class NDA {
     this.company = company;
     this.project = project;
     this.otherEntities = otherEntities;
-    this.date = date;
+    this.date = new Date(date);
 
     let error;
     switch (this.type) {

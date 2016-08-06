@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "description": "Contracts -- gone!",
   "main": "server.js",
+  "private": true,
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "node_modules/.bin/mocha",
-    "doc-api": "node_modules/.bin/apidoc-swagger -i server.js -o docs/",
     "lint": "node_modules/.bin/eslint .",
     "start": "node server.js"
   },
@@ -21,7 +21,7 @@
     "GO",
     "NDA"
   ],
-  "author": "",
+  "author": "austin <austin.cawley@gmail.com>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/contracts-go/backend/issues"
@@ -36,8 +36,7 @@
     "html-docx-js": "^0.2.2",
     "moment": "^2.14.1",
     "morgan": "^1.7.0",
-    "nodemailer": "^2.5.0",
-    "officegen": "^0.2.10"
+    "nodemailer": "^2.5.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -47,6 +46,7 @@
     "eslint-plugin-import": "^1.11.1",
     "eslint-plugin-jsx-a11y": "^1.5.5",
     "eslint-plugin-react": "^5.2.2",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "swagger-express": "^1.0.5"
   }
 }
