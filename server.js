@@ -1,43 +1,28 @@
 /**
- * Created by austin on 7/20/16.
+ * @file Created by austin on 7/20/16.
  */
 
 // Load the config files. Keep the passwords in the private.config.json
 const config = require('./config.json');
 const privateConfig = require('./private.config.json');
 // Data Models
-const NDA = require('./models/NDA');
-const PI = require('./models/PI');
-const Project = require('./models/Project');
-const Company = require('./models/Company');
-const User = require('./models/User');
+const NDA = require('./lib/models/NDA');
+const PI = require('./lib/models/PI');
+const Project = require('./lib/models/Project');
+const Company = require('./lib/models/Company');
+const User = require('./lib/models/User');
 // Files / emails
 const fs = require('fs');
-const htmlToDocx = require('html-docx-js');
 const nodemailer = require('nodemailer');
-const emailTemplater = require('./email-templates/email-templates');
+const emailTemplater = require('./lib/email-templates/email-templates');
+// Database
+const firebase = require('firebase');
 // Server
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
 const express = require('express');
 const app = express();
-// Documentation
-const swagger = require('swagger-jsdoc');
-
-const swaggerDef = {
-  info: {
-    title: 'Contracts-Go Api',
-    description: 'The Contracts-Go Api',
-    version: '1.0.0',
-  },
-  host: `${config.basePath}:${config.port}`,
-};
-const swaggerOpts = {
-  swaggerDefinition: swaggerDef,
-  apis: ['./server.js', './models/*.js'],
-};
-const swaggerSpec = swagger(swaggerOpts);
 
 app.set('env', config.env);
 
@@ -48,13 +33,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Allow Cross Origin Requests
 app.use(cors());
 
-// ROUTES
-
-// Serve swagger docs the way you like (Recommendation: swagger-tools)
-app.get('/api-docs.json', (req, res) => {
-  res.send(swaggerSpec);
-});
-
 // Logs http requests made to server
 if (app.get('env') === 'production') {
   const logFile = fs.createWriteStream('./access.log', { flags: 'a' });
@@ -63,6 +41,16 @@ if (app.get('env') === 'production') {
   app.use(morgan('dev'));
 }
 
+// DATABASE SETUP
+firebase.initializeApp({
+  serviceAccount: `${__dirname}/private.firebaseCreds.json`,
+  databaseURL: 'https://contracts-go.firebaseio.com',
+});
+const db = firebase.database();
+const ndasDbRef = db.ref('ndas');
+const usersDbRef = db.ref('users');
+
+// EMAIL SETUP
 // Setup the e-mail-er client
 const smtpConfig = {
   host: 'smtp.gmail.com',
@@ -107,7 +95,6 @@ function sendMail(mail) {
  *      type: object
  *
  */
-
 /**
  * @swagger
  * /generate:
@@ -182,8 +169,7 @@ app.post('/generate', (req, res, next) => {
   if (data.emailTo) {
     const admin = new User(data.emailTo.name, data.emailTo.email);
 
-    // Create the nda page
-    const wordBuffer = htmlToDocx.asBlob(ndaText);
+    const wordBuffer = nda.generateDocx();
     const newFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
 
     // Create a .docx temporary file
@@ -233,12 +219,73 @@ app.post('/generate', (req, res, next) => {
   }
 });
 
+app.post('/email', (req, res) => {
+  // Authenticate request?
+  const data = req.body;
+  // Retrieve NDA info from database
+  const ndaID = data.ndaID;
+  const emailToUser = new User(data.emailTo.name, data.emailTo.email);
+
+  const ndaRef = ndasDbRef.ref(ndaID);
+  ndaRef.once('value', (ndaData) => {
+    // Lookup PI and others from database
+
+    const nda = new NDA(ndaData);
+    // Generate doc
+    const docxBuf = nda.generateDocx();
+    // Save doc to temp file
+    // Create a .docx temporary file
+    const tempFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
+    const docFile = fs.createWriteStream(tempFileName);
+    const docxAttachmentName = `nda-${nda.pi.name}-${(new Date()).toDateString()}.docx`;
+    docFile.once('open', () => {
+      docFile.write(docxBuf);
+      docFile.end();
+    });
+
+    // Email to recipient
+    docFile.on('close', () => {
+      sendMail({
+        to: emailToUser.email,
+        subject: `New NDA Request from ${data.pi.name}`,
+        cc: nda.pi.email,
+        html: emailTemplater['new-nda']({
+          company: nda.company,
+          pi: nda.pi,
+          project: nda.project,
+          nda,
+          supportEmail: 'contractsgo@gmail.com',
+          emailToUser,
+        }),
+        attachments: [
+          {
+            filename: docxAttachmentName,
+            content: fs.createReadStream(docFile.path),
+          },
+        ],
+      }).then(() => {
+        // Success. Delete the file
+        console.log('Sent email');
+        fs.unlinkSync(docFile.path);
+        res.status(200).send({ status: 'Sent' });
+      }).catch((error) => {
+        // Error. Log The error and Delete the file
+        fs.unlinkSync(docFile.path);
+        throw error;  // Sends error to handler
+      });
+    }, (errorObj) => {
+      throw new Error(errorObj);
+    });
+  });
+});
+
 
 // Error handling must be put at the end (?)
 if (app.get('env') === 'production') {
   // PRODUCTION
   // Error handler
   app.use((err, req, res, next) => {
+    console.log(err);
     res.status(err.status || 500).send({
       message: err.message,
       error: {}, //  Don't send the stack back
@@ -248,6 +295,7 @@ if (app.get('env') === 'production') {
   // DEVELOPMENT
   // Error handler
   app.use((err, req, res, next) => {
+    console.log(err);
     res.status(err.status || 500).send({
       message: err.message,
       error: err.stack,
