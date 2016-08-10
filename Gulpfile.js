@@ -2,8 +2,8 @@ const gulp = require('gulp');
 const taskListing = require('gulp-task-listing');
 const fs = require('fs');
 const serve = require('gulp-serve');
-// Config
-const config = require('./config.json');
+// Config, defaulted to production for now
+const config = require('./config/config.json').production;
 
 // Documentation
 const swagger = require('swagger-jsdoc');

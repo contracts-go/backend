@@ -1,0 +1,22 @@
+{
+  "development": {
+    "port": 5000,
+    "env": "development",
+    "basePath": "http://localhost",
+    "databaseUrl": "https://contracts-go.firebaseio.com",
+    "corsDomains": ["http://localhost"],
+    "version": "2.0.0",
+    "accessLogFile": "",
+    "consoleLogFile": ""
+  },
+  "production": {
+    "port": 5000,
+    "env": "production",
+    "basePath": "http://api.contracts-go.com",
+    "databaseUrl": "https://contracts-go.firebaseio.com",
+    "corsDomains": ["http://contracts-go.com", "http://contracts-go.firebaseapp.com"],
+    "version": "2.0.0",
+    "accessLogFile": "./access.log",
+    "consoleLogFile": "./console.log"
+  }
+}

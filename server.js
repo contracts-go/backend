@@ -2,9 +2,7 @@
  * @file Created by austin on 7/20/16.
  */
 
-// Load the config files. Keep the passwords in the private.config.json
-const config = require('./config.json');
-const privateConfig = require('./private.config.json');
+const config = require('./config/config');
 // Data Models
 const NDA = require('./lib/models/NDA');
 const PI = require('./lib/models/PI');
@@ -18,12 +16,17 @@ const emailTemplater = require('./lib/email-templates/email-templates');
 // Database
 const firebase = require('firebase');
 // Server + Logging
-const morgan = require('morgan');
-const logger = require('winston');
+const loggers = require('./lib/loggers');
+const logger = loggers.logger;
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
 const app = express();
+
+// Create the tmp directory to store the ndas for emailing
+if (!fs.existsSync('./tmp')) {
+  fs.mkdirSync('./tmp');
+}
 
 app.set('env', config.env);
 
@@ -31,44 +34,22 @@ app.set('env', config.env);
 // Stores urlencoded and application/json into the request's body
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-// Allow Cross Origin Requests
-app.use(cors());
-
-// Logs http requests made to server
-if (app.get('env') === 'production') {
-  const logFile = fs.createWriteStream('./access.log', { flags: 'a' });
-  app.use(morgan('combined', { stream: logFile }));
-} else {
-  app.use(morgan('dev'));
-}
-// Logs all console output to a file
-logger.add(logger.transports.File, { filename: config.consoleLogFile });
-logger.remove(logger.transports.Console);
+// / Allow Cross Origin Requests from the base origin
+app.use(cors({
+  origin: config.corsDomains,
+}));
+app.use(loggers.httpLogger);
 
 // DATABASE SETUP
 firebase.initializeApp({
-  serviceAccount: './private.firebaseCreds.json',
-  databaseURL: 'https://contracts-go.firebaseio.com',
+  serviceAccount: config.firebaseCreds,
+  databaseURL: config.databaseUrl,
 });
 // const db = firebase.database();
 
 // EMAIL SETUP
 // Setup the e-mail-er client
-const smtpConfig = {
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: privateConfig.mail.username,
-    pass: privateConfig.mail.password,
-  },
-};
-const emailTransporter = nodemailer.createTransport(smtpConfig);
-
-// Create the tmp directory to store the ndas for emailing
-if (!fs.existsSync(`${__dirname}/tmp`)) {
-  fs.mkdirSync(`${__dirname}/tmp`);
-}
+const emailTransporter = nodemailer.createTransport(config.smtpConfig);
 
 /**
  * Sents the email through the email transporter
@@ -77,7 +58,7 @@ if (!fs.existsSync(`${__dirname}/tmp`)) {
  */
 function sendMail(mail) {
   return emailTransporter.sendMail({
-    from: privateConfig.mail.username,
+    from: config.private.mail.username,
     to: mail.to,
     cc: mail.cc,
     subject: mail.subject,
@@ -148,7 +129,7 @@ app.post('/email', (req, res) => {
     const docxBuf = nda.generateDocx();
     // Save doc to temp file
     // Create a .docx temporary file
-    const tempFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
+    const tempFileName = `./tmp/nda-${(new Date()).toISOString()}.docx`;
     const docFile = fs.createWriteStream(tempFileName);
     const docxAttachmentName = `nda-${nda.pi.name}-${(new Date()).toDateString()}.docx`;
     docFile.once('open', () => {
@@ -178,7 +159,7 @@ app.post('/email', (req, res) => {
         ],
       }).then(() => {
         // Success. Delete the file
-        logger.log('Sent email');
+        logger.log('info', 'Sent email');
         fs.unlinkSync(docFile.path);
         res.status(200).send({ status: 'Sent' });
       }).catch((error) => {
@@ -190,6 +171,10 @@ app.post('/email', (req, res) => {
       throw new Error(errorObj);
     });
   });
+});
+
+app.post('/generate', (req, res) => {
+  res.status(200).send({ success: 'success' });
 });
 
 // Error handling must be put at the end (?)
@@ -217,7 +202,7 @@ if (app.get('env') === 'production') {
 
 // Runs the app
 const server = app.listen(config.port, () => {
-  logger.log(`Running on port   ${config.port}`);
+  logger.log('info', `Running on port ${config.port} in ${app.get('env')} mode.`);
 });
 
 // Exported for unit testing and others
