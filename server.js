@@ -17,9 +17,10 @@ const nodemailer = require('nodemailer');
 const emailTemplater = require('./lib/email-templates/email-templates');
 // Database
 const firebase = require('firebase');
-// Server
-const bodyParser = require('body-parser');
+// Server + Logging
 const morgan = require('morgan');
+const logger = require('winston');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
 const app = express();
@@ -40,15 +41,16 @@ if (app.get('env') === 'production') {
 } else {
   app.use(morgan('dev'));
 }
+// Logs all console output to a file
+logger.add(logger.transports.File, { filename: config.consoleLogFile });
+logger.remove(logger.transports.Console);
 
 // DATABASE SETUP
 firebase.initializeApp({
-  serviceAccount: `${__dirname}/private.firebaseCreds.json`,
+  serviceAccount: './private.firebaseCreds.json',
   databaseURL: 'https://contracts-go.firebaseio.com',
 });
-const db = firebase.database();
-const ndasDbRef = db.ref('ndas');
-const usersDbRef = db.ref('users');
+// const db = firebase.database();
 
 // EMAIL SETUP
 // Setup the e-mail-er client
@@ -69,8 +71,9 @@ if (!fs.existsSync(`${__dirname}/tmp`)) {
 }
 
 /**
+ * Sents the email through the email transporter
  * @see http://nodemailer.com/2-0-0-beta/setup-smtp/
- * @param mail
+ * @param {object} mail
  */
 function sendMail(mail) {
   return emailTransporter.sendMail({
@@ -85,140 +88,50 @@ function sendMail(mail) {
 
 /**
  * @swagger
- * parameter:
- *  generateBody:
- *    name: generateBody
- *    description: Body for the generate request.
- *    in: body
- *    required: true
- *    schema:
- *      type: object
- *
- */
-/**
- * @swagger
- * /generate:
+ * /email:
  *  post:
- *    description: Generate and email a NDA Document
- *    produces:
- *      - application/json
+ *    description: |
+ *      Emails the document as a docx file.
  *    parameters:
- *       - name: company
- *         description: Company involved.
- *         in: body
- *         required: true
- *         schema:
- *          $ref: '#/definitions/Company'
- *       - name: pi
- *         description: PI involved.
- *         in: body
- *         required: true
- *         schema:
- *          $ref: '#/definitions/PI'
- *       - name: emailTo
- *         description: The contact/admin to email the generated document to.
- *         in: body
- *         required: false
- *         schema:
- *          $ref: '#/definitions/User'
+ *      - name: emailReqBody
+ *        in: body
+ *        description: All those good things necessary to email a doc.
+ *        required: true
+ *        schema:
+ *          title: Email Body
+ *          type: object
+ *          properties:
+ *            document:
+ *              type: string
+ *              description: |
+ *                A udid string (from Firebase) for the document to be sent.
  *    responses:
- *      200:
- *        description: Document created
+ *      201:
+ *        description: Successfully Sent email
+ *        schema:
+ *          title: SuccessResponse
+ *          properties:
+ *            message:
+ *              type: string
+ *              description: 'Message telling of the success. Grand success.'
+ *      401:
+ *        description: Unauthorized to send email
+ *        schema:
+ *          title: UnauthorizedResponse
+ *          type: object
+ *          properties:
+ *            message:
+ *              type: string
+ *              description: 'Message about why someone is not authorized.'
+ *      404:
+ *        description: Not found
+ *        schema:
+ *          title: NotFound Response
+ *          properties:
+ *            message:
+ *              type: string
+ *              description: 'Message about which property was not found in the database.'
  */
-app.post('/generate', (req, res, next) => {
-  const data = req.body;
-  let nda;
-  let date;
-
-  // Data section
-
-  // Defaults to today
-  if (data.date) {
-    date = new Date(data.date);
-  } else {
-    date = new Date();
-  }
-
-  // Create the NDA
-  try {
-    const ndaType = data.type;
-    const pi = new PI(data.pi.name, data.pi.title, data.pi.email);
-    const company = new Company(
-      data.company.type,
-      data.company.name,
-      data.company.state,
-      data.company.location,
-      data.company.contact
-    );
-    const project = new Project(data.project.industry, data.project.description);
-    // Fill the nda
-    nda = new NDA(ndaType, pi, company, project, date);
-  } catch (err) {
-    // Object Creation Errors
-    if (err instanceof TypeError) {
-      // If the problem is missing data in the request, mark as a BAD REQUEST
-      err.status = 400;
-      if (app.get('env') !== 'production') {
-        console.log(err);
-      }
-    }
-    throw err;
-  }
-  const ndaText = nda.generateHTML();
-  // Email Section
-  if (data.emailTo) {
-    const admin = new User(data.emailTo.name, data.emailTo.email);
-
-    const wordBuffer = nda.generateDocx();
-    const newFileName = `${__dirname}/tmp/nda-${(new Date()).toISOString()}.docx`;
-
-    // Create a .docx temporary file
-    const docFile = fs.createWriteStream(newFileName);
-    docFile.once('open', () => {
-      docFile.write(wordBuffer);
-      docFile.end();
-    });
-
-    // Event handlers
-    docFile.on('error', (error) => {
-      console.log(error);
-    });
-    docFile.on('close', () => {
-      sendMail({
-        to: admin.email,
-        subject: `New NDA Request from ${data.pi.name}`,
-        cc: data.pi.email,
-        html: emailTemplater['new-nda']({
-          company: nda.company,
-          pi: nda.pi,
-          project: nda.project,
-          nda,
-          supportEmail: 'contractsgo@gmail.com',
-          admin,
-        }),
-        attachments: [
-          {
-            filename: `nda-${data.pi.name}-${(new Date()).toDateString()}.docx`,
-            content: fs.createReadStream(docFile.path),
-          },
-        ],
-      }).then(() => {
-        // Success. Delete the file
-        console.log('Sent email');
-        fs.unlinkSync(docFile.path);
-        res.status(201).send({ nda: ndaText });
-      }).catch((error) => {
-        // Error. Log The error and Delete the file
-        console.log(`Error sending email: ${error}`);
-        fs.unlinkSync(docFile.path);
-        throw error;  // Sends error to handler
-      });
-    });
-  } else {
-    res.status(201).send({ nda: ndaText });
-  }
-});
-
 app.post('/email', (req, res) => {
   // Authenticate request?
   const data = req.body;
@@ -226,7 +139,7 @@ app.post('/email', (req, res) => {
   const ndaID = data.ndaID;
   const emailToUser = new User(data.emailTo.name, data.emailTo.email);
 
-  const ndaRef = ndasDbRef.ref(ndaID);
+  const ndaRef = ndasDbRef.ref(ndaID); // eslint-disable-line no-unused-vars
   ndaRef.once('value', (ndaData) => {
     // Lookup PI and others from database
 
@@ -265,7 +178,7 @@ app.post('/email', (req, res) => {
         ],
       }).then(() => {
         // Success. Delete the file
-        console.log('Sent email');
+        logger.log('Sent email');
         fs.unlinkSync(docFile.path);
         res.status(200).send({ status: 'Sent' });
       }).catch((error) => {
@@ -279,13 +192,12 @@ app.post('/email', (req, res) => {
   });
 });
 
-
 // Error handling must be put at the end (?)
 if (app.get('env') === 'production') {
   // PRODUCTION
   // Error handler
-  app.use((err, req, res, next) => {
-    console.log(err);
+  app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+    logger.error(err);
     res.status(err.status || 500).send({
       message: err.message,
       error: {}, //  Don't send the stack back
@@ -294,8 +206,8 @@ if (app.get('env') === 'production') {
 } else {
   // DEVELOPMENT
   // Error handler
-  app.use((err, req, res, next) => {
-    console.log(err);
+  app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+    logger.error(err);
     res.status(err.status || 500).send({
       message: err.message,
       error: err.stack,
@@ -305,7 +217,7 @@ if (app.get('env') === 'production') {
 
 // Runs the app
 const server = app.listen(config.port, () => {
-  console.log(`Running on port   ${config.port}`);
+  logger.log(`Running on port   ${config.port}`);
 });
 
 // Exported for unit testing and others

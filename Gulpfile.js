@@ -1,4 +1,5 @@
 const gulp = require('gulp');
+const taskListing = require('gulp-task-listing');
 const fs = require('fs');
 const serve = require('gulp-serve');
 // Config
@@ -8,7 +9,11 @@ const config = require('./config.json');
 const swagger = require('swagger-jsdoc');
 const jsdoc = require('gulp-jsdoc3');
 
-gulp.task('apidoc', () => {
+const sourceFiles = ['./server.js', './lib/**/*.js'];
+
+gulp.task('help', taskListing);
+
+gulp.task('doc-swagger', () => {
   // Generate the swagger
   const swaggerDef = {
     info: {
@@ -17,14 +22,16 @@ gulp.task('apidoc', () => {
       version: config.version,
     },
     host: `${config.basePath}:${config.port}`,
+    consumes: ['application/json'],
+    produces: ['application/json'],
+    schemes: ['http'],  // https coming soon
   };
   const swaggerOpts = {
     swaggerDefinition: swaggerDef,
-    apis: ['./server.js', './models/*.js'],
+    apis: sourceFiles,
   };
   const swaggerSpec = swagger(swaggerOpts);
 
-  // Create the tmp directory to store the ndas for emailing
   if (!fs.existsSync('./docs')) {
     fs.mkdirSync('./docs');
   }
@@ -35,12 +42,14 @@ gulp.task('apidoc', () => {
   });
 });
 
-gulp.task('doc', (cb) => {
-  gulp.src(['./server.js', './lib/**/*.js'])
+gulp.task('doc-jsdoc', (cb) => {
+  gulp.src(sourceFiles)
     .pipe(jsdoc(cb));
 });
 
-gulp.task('servedocs', ['doc', 'apidoc'], () => {
+gulp.task('doc', ['doc-swagger', 'doc-jsdoc']);
+
+gulp.task('servedocs', ['doc'], () => {
   console.log('Serving!');
   serve({
     root: ['docs'],
@@ -48,4 +57,4 @@ gulp.task('servedocs', ['doc', 'apidoc'], () => {
   });
 });
 
-gulp.task('default');
+gulp.task('default', ['help']);

@@ -1,0 +1,5 @@
+# Ignore all generated documents + temp directories
+docs/
+tmp/
+# Ignore all library roots
+node_modules/

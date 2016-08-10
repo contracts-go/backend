@@ -47,7 +47,7 @@ describe('Generate NDA', () => {
       .post('/generate')
       .send(goodData)
       .end((err, res) => {
-        res.should.be.ok;
+        res.should.be.ok; // eslint-disable-line no-unused-expressions
         // PI
         res.body.nda.should.contain(goodData.pi.name);
         res.body.nda.should.contain(goodData.pi.title);

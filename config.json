@@ -2,5 +2,7 @@
   "port": 5000,
   "env": "development",
   "basePath": "localhost",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "accessLogFile": "access.log",
+  "consoleLogFile": "console.log"
 }
