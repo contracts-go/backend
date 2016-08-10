@@ -34,11 +34,28 @@ app.set('env', config.env);
 // Stores urlencoded and application/json into the request's body
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-// / Allow Cross Origin Requests from the base origin
-app.use(cors({
-  origin: config.corsDomains,
-}));
 app.use(loggers.httpLogger);
+// / Allow Cross Origin Requests from only allowed origins
+const corsOptions = {
+  /**
+   * Test to make sure the origin is in the list of OK domains
+   * @param origin
+   * @param cb
+   */
+  origin: (origin, cb) => {
+    let isWhiteListed = false;
+    for (const domain of config.corsDomains) {
+      // Ignore case and match to any of the domains authorized
+      if (origin.match(new RegExp(domain, 'i'))) {
+        isWhiteListed = true;
+        // Break on first success
+        break;
+      }
+    }
+    cb(null, isWhiteListed);
+  },
+};
+app.use(cors(corsOptions));
 
 // DATABASE SETUP
 firebase.initializeApp({
