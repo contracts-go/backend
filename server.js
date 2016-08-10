@@ -2,7 +2,6 @@
  * @file Created by austin on 7/20/16.
  */
 
-const config = require('./config/config');
 // Data Models
 const NDA = require('./lib/models/NDA');
 const PI = require('./lib/models/PI');
@@ -15,9 +14,7 @@ const nodemailer = require('nodemailer');
 const emailTemplater = require('./lib/email-templates/email-templates');
 // Database
 const firebase = require('firebase');
-// Server + Logging
-const loggers = require('./lib/loggers');
-const logger = loggers.logger;
+// Server
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
@@ -28,7 +25,18 @@ if (!fs.existsSync('./tmp')) {
   fs.mkdirSync('./tmp');
 }
 
+// Use the command line args to determine env if not already there
+// Useful for testing environments
+if (!process.env.CONTRACTS_ENV) {
+  process.env.CONTRACTS_ENV = process.argv[2];
+}
+
+const config = require('./config/config')(process.env.CONTRACTS_ENV);
 app.set('env', config.env);
+
+// Logging
+const loggers = require('./lib/loggers')(config.env);
+const logger = loggers.logger;
 
 // Middleware for the API
 // Stores urlencoded and application/json into the request's body
@@ -46,7 +54,7 @@ const corsOptions = {
     let isWhiteListed = false;
     for (const domain of config.corsDomains) {
       // Ignore case and match to any of the domains authorized
-      if (origin.match(new RegExp(domain, 'i'))) {
+      if (origin && origin.match(new RegExp(domain, 'i'))) {
         isWhiteListed = true;
         // Break on first success
         break;
@@ -62,11 +70,12 @@ firebase.initializeApp({
   serviceAccount: config.firebaseCreds,
   databaseURL: config.databaseUrl,
 });
+firebase.database.enableLogging(logger.info);
 // const db = firebase.database();
 
 // EMAIL SETUP
 // Setup the e-mail-er client
-const emailTransporter = nodemailer.createTransport(config.smtpConfig);
+const emailTransporter = nodemailer.createTransport(config.smtp);
 
 /**
  * Sents the email through the email transporter
@@ -83,6 +92,10 @@ function sendMail(mail) {
     attachments: mail.attachments,
   });
 }
+
+app.get('/', (req, res) => {
+  res.status(200).send({ message: 'Welcome to the start of world peace.' });
+});
 
 /**
  * @swagger
@@ -176,7 +189,7 @@ app.post('/email', (req, res) => {
         ],
       }).then(() => {
         // Success. Delete the file
-        logger.log('info', 'Sent email');
+        logger.log('debug', 'Sent email');
         fs.unlinkSync(docFile.path);
         res.status(200).send({ status: 'Sent' });
       }).catch((error) => {
@@ -188,10 +201,6 @@ app.post('/email', (req, res) => {
       throw new Error(errorObj);
     });
   });
-});
-
-app.post('/generate', (req, res) => {
-  res.status(200).send({ success: 'success' });
 });
 
 // Error handling must be put at the end (?)

@@ -4,46 +4,67 @@
  */
 
 // Load the config files. Keep the passwords in the private.config.json
-let config = require('./config.json');
-let privateConfig = require('./private.config.json');
-const firebaseCreds = require('./private.firebaseCreds.json');
+const reload = require('require-reload')(require);
 
-// Get the configuration from the command line
-switch (process.argv[2]) {
-  case 'dev':
-    config = config.development;
-    privateConfig = privateConfig.development;
-    break;
-  default:  // Default to production mode
-    config = config.production;
-    privateConfig = privateConfig.production;
+/**
+ * Dynamically get all configuration file objects
+ * @param {string} env
+ * @returns {*} configuration object
+ */
+function configuration(env) {
+  let config = reload('./config.json');
+  let privateConfig = reload('./private.config.json');
+  let firebaseCreds;
+  // Dynamically get the config off passed environment
+  switch (env) {
+    case 'dev':
+    case 'development': {
+      config = config.development;
+      privateConfig = privateConfig.development;
+      firebaseCreds = reload('./private.devFirebaseCreds.json');
+      break;
+    }
+    case 'testing': {
+      config = config.development;
+      privateConfig = privateConfig.development;
+      config.databaseURL = 'ws://dummy.firebaseio.test:5001';
+      firebaseCreds = {
+        private_key: 'fake',
+        client_email: 'fake',
+      };
+      break;
+    }
+    default: {  // Default to production mode
+      config = config.production;
+      privateConfig = privateConfig.production;
+      firebaseCreds = reload('./private.firebaseCreds.json');
+    }
+  }
+  /**
+   * The SMTP configuration for mail
+   * @type {{host: string, port: number, secure: boolean, auth: {user: string, pass: string}}}
+   */
+  const smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: privateConfig.mail.username,
+      pass: privateConfig.mail.password,
+    },
+  };
+  // Link all configs in the main config object
+  config.private = privateConfig;
+  config.firebaseCreds = firebaseCreds;
+  config.smtp = smtpConfig;
+  return config;
 }
 
 /**
- * The main configuration
+ * Gets the configuration based on the environment passed
+ * @type {function}
  */
-module.exports = config;
-
-/**
- * All private configs, like passwords, api keys, etc.
- */
-module.exports.private = privateConfig;
-
-/**
- * Service account credentials for firebase
- */
-module.exports.firebaseCreds = firebaseCreds;
-
-/**
- * The SMTP configuration for mail
- * @type {{host: string, port: number, secure: boolean, auth: {user: string, pass: string}}}
- */
-module.exports.smtpConfig = {
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: privateConfig.mail.username,
-    pass: privateConfig.mail.password,
-  },
-};
+module.exports = configuration;
+delete require.cache[require.resolve('./config.json')];
+delete require.cache[require.resolve('./private.config.json')];
+delete require.cache[require.resolve('./private.firebaseCreds.json')];
