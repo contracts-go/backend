@@ -3,9 +3,7 @@
  */
 
 // Data Models
-const NDA = require('./lib/models/NDA');
-const PI = require('./lib/models/PI');
-const Project = require('./lib/models/Project');
+const Document = require('./lib/models/Document');
 const Company = require('./lib/models/Company');
 const User = require('./lib/models/User');
 // Files / emails
@@ -71,7 +69,10 @@ firebase.initializeApp({
   databaseURL: config.databaseUrl,
 });
 firebase.database.enableLogging(logger.info);
-// const db = firebase.database();
+const db = firebase.database();
+const usersDbRef = db.ref('users');
+const documentsDbRef = db.ref('documents');
+const companiesDbRef = db.ref('companies');
 
 // EMAIL SETUP
 // Setup the e-mail-er client
@@ -144,17 +145,13 @@ app.get('/', (req, res) => {
  *              description: 'Message about which property was not found in the database.'
  */
 app.post('/email', (req, res) => {
-  // Authenticate request?
   const data = req.body;
-  // Retrieve NDA info from database
-  const ndaID = data.ndaID;
-  const emailToUser = new User(data.emailTo.name, data.emailTo.email);
-
-  const ndaRef = ndasDbRef.ref(ndaID); // eslint-disable-line no-unused-vars
+  const ndaRef = documentsDbRef.child(data.document); // eslint-disable-line no-unused-vars
+  // Get
   ndaRef.once('value', (ndaData) => {
-    // Lookup PI and others from database
-
-    const nda = new NDA(ndaData);
+    // Lookup Sender and others from database
+    const senderRef = usersDbRef.child();
+    const nda = new Document(ndaData);
     // Generate doc
     const docxBuf = nda.generateDocx();
     // Save doc to temp file

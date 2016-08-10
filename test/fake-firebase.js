@@ -3,7 +3,6 @@
  * @file Creates a new instance of a firebase test server
  */
 
-
 const FirebaseServer = require('firebase-server');
 const testData = require('./testdata.json');
 

@@ -6,7 +6,6 @@ os:
 # Create the private configuration files
 before_install:
   - echo -e '{"development":{"mail":{"username":"contractsgo@gmail.com","password":"$CI_MAIL_PASSWORD"}},"production":{"mail":{"username":"contractsgo@gmail.com","password":"$CI_MAIL_PASSWORD"}}}' >> ./config/private.config.json
-  - echo -e '{"type":"service_account","project_id":"contracts-go","private_key_id":"7e860da18bca8794ad588e3f2ecb0058711485ec","private_key":"$CI_FIREBASE_PRIVATEKEY","client_email":"backend@contracts-go.iam.gserviceaccount.com","client_id":"115949872061149733302","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://accounts.google.com/o/oauth2/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/backend%40contracts-go.iam.gserviceaccount.com"}' >> ./config/private.firebaseCreds.json
 install:
   - npm install
 script:

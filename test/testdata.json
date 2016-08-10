@@ -1,11 +1,38 @@
 {
   "documents": {
-
+    "docOne": {
+      "type": "mutual",
+      "project": {
+        "industry": "doughnuts",
+        "description": "making better doughnuts"
+      },
+      "date": "2016-08-10T18:38:16.655Z",
+      "patchUrl": "",
+      "templateUrl": "",
+      "status": "complete",
+      "creator": "userOne",
+      "admin": "userTwo",
+      "companyContact": "userThree",
+      "createdAt": ""
+    }
   },
   "users": {
+    "userOne": {
 
+    },
+    "userTwo": {
+
+    },
+    "userThree": {
+
+    }
   },
   "companies": {
+    "companyOne": {
 
+    },
+    "companyTwo": {
+
+    }
   }
 }
