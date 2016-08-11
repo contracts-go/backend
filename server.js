@@ -200,7 +200,7 @@ app.post('/email', (req, res) => {
       if (docxFile) {
         fs.unlink(docxFile.path);
       }
-      res.status(201).send({message: 'Sent!'});
+      res.status(201).send({ message: 'Sent!' });
     })
     .catch((error) => {
       // Equally so done with file, remove it
