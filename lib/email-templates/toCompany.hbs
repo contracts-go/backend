@@ -1,0 +1,32 @@
+{{!
+Takes:
+@param {Company} company
+@param {User} pi
+@param {User} contact - the company contact
+@param {User} admin
+@param {Document} doc
+From Base:
+@param {string} supportEmail
+}}
+{{#extend "base"}}
+    {{#content "content"}}
+        <p style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6em; font-weight: normal; margin: 0 0 10px; padding: 0;">
+            Hey {{admin.name}},</p><br>
+
+        <p style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6em; font-weight: normal; margin: 0 0 10px; padding: 0;">
+            <a href="https://www.stevens.edu/directory/personnel?query={{pi.name}}"
+               style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6em; color: #999999; margin: 0; padding: 0;">{{pi.name}}</a>
+            would like to form a <b>{{doc.type}}</b> confidential disclosure agreement with <a
+                href="https://www.google.com/#q={{company.name}}"
+                style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6em; color: #999999; margin: 0; padding: 0;">{{company.name}}</a>,
+            a <b>{{company.type}}</b> from <b>{{company.state}}</b>.</p>
+
+        <p style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6em; font-weight: normal; margin: 0 0 10px; padding: 0;">
+            Please review the details in the attached document and if everything looks okay, you can send it on to
+            <b>{{contact.name}}</b> from <b>{{company.name}}</b> at <a href="mailto:{{contact.email}}"
+                                                                       style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6em; color: #999999; margin: 0; padding: 0;">{{contact.email}}</a>.
+            Otherwise, you can reach <b>{{pi.name}}</b> at <a href="mailto:{{pi.email}}"
+                                                              style="font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6em; color: #999999; margin: 0; padding: 0;">{{pi.email}}
+            .</a></p><br>
+    {{/content}}
+{{/extend}}

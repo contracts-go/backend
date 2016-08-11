@@ -12,7 +12,6 @@ if (!process.env.CONTRACTS_ENV) {
 const config = require('./config/config')();
 // Data Models
 const Document = require('./lib/models/Document');
-const Company = require('./lib/models/Company');
 const User = require('./lib/models/User');
 // Errors
 const errors = require('./lib/models/errors/errors');
@@ -27,7 +26,6 @@ const express = require('express');
 const app = express();
 // Other necessary functions
 const utils = require('./lib/utils');
-const emailTemplater = require('./lib/email-templates/email-templates');
 
 // Create the tmp directory to store the ndas for emailing
 if (!fs.existsSync('./tmp')) {
@@ -134,7 +132,6 @@ app.post('/email', (req, res) => {
   let doc;
   let sender;
   let recipient;
-  let company;
   let docxFile;
 
   // This needs to be greatly reduced in db calls
