@@ -12,6 +12,8 @@ const reload = require('require-reload')(require);
  * @returns {*} configuration object
  */
 function configuration(env) {
+  // Defaults to using the env variable but allows dynamic loading
+  if (!env) env = process.env.CONTRACTS_ENV;  // eslint-disable-line
   let config = reload('./config.json');
   let privateConfig = reload('./private.config.json');
   let firebaseCreds;
@@ -65,6 +67,3 @@ function configuration(env) {
  * @type {function}
  */
 module.exports = configuration;
-delete require.cache[require.resolve('./config.json')];
-delete require.cache[require.resolve('./private.config.json')];
-delete require.cache[require.resolve('./private.firebaseCreds.json')];

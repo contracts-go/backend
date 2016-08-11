@@ -11,10 +11,14 @@ chai.should();
 chai.use(chaiHttp);
 
 describe('Basic Email', () => {
-  it('should connect to the fake firebase server', () => {
+  it('should email using test data', () => {
     chai.request(server)
-      .get('/')
-      .send()
+      .post('/email')
+      .send({
+        document: 'documentOne',
+        sender: 'userOne',
+        recipient: 'userThree',
+      })
       .end((err, res) => {
         res.should.be.ok; // eslint-disable-line
       });

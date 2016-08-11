@@ -1,15 +1,23 @@
 /**
- * @file Created by austin on 7/20/16.
+ * Created by austin on 7/20/16.
+ * @file The main file for our small backend mailer. Takes care of routes and configuration
  */
 
+// Use the command line args to determine env if not already there
+// Useful for testing environments
+if (!process.env.CONTRACTS_ENV) {
+  process.env.CONTRACTS_ENV = process.argv[2];
+}
+// Configuration
+const config = require('./config/config')();
 // Data Models
 const Document = require('./lib/models/Document');
 const Company = require('./lib/models/Company');
 const User = require('./lib/models/User');
+// Errors
+const errors = require('./lib/models/errors/errors');
 // Files / emails
 const fs = require('fs');
-const nodemailer = require('nodemailer');
-const emailTemplater = require('./lib/email-templates/email-templates');
 // Database
 const firebase = require('firebase');
 // Server
@@ -17,19 +25,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
 const app = express();
+// Other necessary functions
+const utils = require('./lib/utils');
+require('./lib/templates/templates');
 
 // Create the tmp directory to store the ndas for emailing
 if (!fs.existsSync('./tmp')) {
   fs.mkdirSync('./tmp');
 }
 
-// Use the command line args to determine env if not already there
-// Useful for testing environments
-if (!process.env.CONTRACTS_ENV) {
-  process.env.CONTRACTS_ENV = process.argv[2];
-}
-
-const config = require('./config/config')(process.env.CONTRACTS_ENV);
 app.set('env', config.env);
 
 // Logging
@@ -68,31 +72,7 @@ firebase.initializeApp({
   serviceAccount: config.firebaseCreds,
   databaseURL: config.databaseUrl,
 });
-firebase.database.enableLogging(logger.info);
-const db = firebase.database();
-const usersDbRef = db.ref('users');
-const documentsDbRef = db.ref('documents');
-const companiesDbRef = db.ref('companies');
-
-// EMAIL SETUP
-// Setup the e-mail-er client
-const emailTransporter = nodemailer.createTransport(config.smtp);
-
-/**
- * Sents the email through the email transporter
- * @see http://nodemailer.com/2-0-0-beta/setup-smtp/
- * @param {object} mail
- */
-function sendMail(mail) {
-  return emailTransporter.sendMail({
-    from: config.private.mail.username,
-    to: mail.to,
-    cc: mail.cc,
-    subject: mail.subject,
-    html: mail.html,
-    attachments: mail.attachments,
-  });
-}
+firebase.database.enableLogging(logger.database);
 
 app.get('/', (req, res) => {
   res.status(200).send({ message: 'Welcome to the start of world peace.' });
@@ -138,7 +118,7 @@ app.get('/', (req, res) => {
  *      404:
  *        description: Not found
  *        schema:
- *          title: NotFound Response
+ *          title: NotFoundResponse
  *          properties:
  *            message:
  *              type: string
@@ -146,12 +126,51 @@ app.get('/', (req, res) => {
  */
 app.post('/email', (req, res) => {
   const data = req.body;
-  const ndaRef = documentsDbRef.child(data.document); // eslint-disable-line no-unused-vars
-  // Get
-  ndaRef.once('value', (ndaData) => {
-    // Lookup Sender and others from database
-    const senderRef = usersDbRef.child();
-    const nda = new Document(ndaData);
+  const docId = data.document; // eslint-disable-line no-unused-vars
+  const senderId = data.sender;
+  const recipientId = data.recipient;
+
+  // Start with getting the document
+  let doc;
+  let sender;
+  let recipient;
+  Document.getById(docId)
+    .then((docObj) => {
+      doc = docObj;
+      logger.debug('Got Document');
+      return User.getById(senderId);
+    })
+    .then((senderObj) => {
+      sender = senderObj; // The user object from sender
+      logger.debug('Got Sender');
+      return User.getById(recipientId);
+    })
+    .then((recipientObj) => {
+      recipient = recipientObj;
+      logger.info(doc);
+
+      // Now that we have some data ...
+      // Authenticate request:
+      //  Needs:
+      //  Everybody exists --> thrown through query promises
+      //  Sender has access to document
+      if (!sender.hasAccess(doc)) {
+        throw new errors.UnauthorizedError({
+          user: sender.id,
+          action: `email the document:${doc.id}`,
+        });
+      }
+      // If we've made it this far --> We're all good to build the document!
+      const html = doc.generateHtml();
+      logger.debug(html);
+      res.status(201).send("Gotcha");
+    })
+    .catch((error) => {
+      logger.log('error', error);
+      res.status(error.status | 500).send({ message: error.message });
+    });
+
+    /*
     // Generate doc
     const docxBuf = nda.generateDocx();
     // Save doc to temp file
@@ -197,7 +216,7 @@ app.post('/email', (req, res) => {
     }, (errorObj) => {
       throw new Error(errorObj);
     });
-  });
+  });*/
 });
 
 // Error handling must be put at the end (?)

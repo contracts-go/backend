@@ -8,6 +8,7 @@
     "test": "test"
   },
   "scripts": {
+    "pretest": "export CONTACTS_ENV=testing",
     "test": "node_modules/.bin/mocha",
     "lint": "node_modules/.bin/eslint .",
     "start": "node server.js"
@@ -30,15 +31,18 @@
   "dependencies": {
     "body-parser": "^1.15.2",
     "cors": "^2.7.1",
+    "diff-match-patch": "^1.0.0",
     "express": "^4.14.0",
     "express-winston": "^2.0.0",
     "firebase": "^3.2.1",
     "fs": "0.0.2",
+    "gcloud": "^0.37.0",
     "handlebars": "^4.0.5",
     "html-docx-js": "^0.2.2",
     "moment": "^2.14.1",
     "morgan": "^1.7.0",
     "nodemailer": "^2.5.0",
+    "q": "^1.4.1",
     "require-reload": "^0.2.2",
     "winston": "^2.2.0"
   },

@@ -1,6 +1,7 @@
 {
   "documents": {
-    "docOne": {
+    "title": "Test Document",
+    "documentOne": {
       "type": "mutual",
       "project": {
         "industry": "doughnuts",
@@ -8,7 +9,7 @@
       },
       "date": "2016-08-10T18:38:16.655Z",
       "patchUrl": "",
-      "templateUrl": "",
+      "templateUrl": "test-contracts-go.appspot.com/stevens-mutual.hbs",
       "status": "complete",
       "creator": "userOne",
       "admin": "userTwo",
@@ -18,21 +19,62 @@
   },
   "users": {
     "userOne": {
-
+      "email": "userOne@test.com",
+      "name": "User One",
+      "type": "pi",
+      "company": "companyOne",
+      "documents": [
+        "documentOne"
+      ]
     },
     "userTwo": {
-
+      "email": "userTwo@test.com",
+      "name": "User Two",
+      "type": "pi",
+      "company": "companyOne",
+      "documents": [
+        "documentOne"
+      ]
     },
     "userThree": {
-
+      "email": "userThree@test.com",
+      "name": "User Three",
+      "type": "admin",
+      "company": "companyTwo",
+      "documents": []
     }
   },
   "companies": {
     "companyOne": {
-
+      "name": "Company One",
+      "type": "LLC",
+      "state": "NY",
+      "location": {
+        "addressCountry": "",
+        "addressLocality": "",
+        "addressRegion": "",
+        "postalCode": "",
+        "streetAddress": ""
+      },
+      "users": [
+        "userOne",
+        "userTwo"
+      ]
     },
     "companyTwo": {
-
+      "name": "Company Two",
+      "type": "LLC",
+      "state": "NJ",
+      "location": {
+        "addressCountry": "",
+        "addressLocality": "",
+        "addressRegion": "",
+        "postalCode": "",
+        "streetAddress": ""
+      },
+      "users": [
+        "userThree"
+      ]
     }
   }
 }
