@@ -11,9 +11,9 @@
       "patchUrl": "",
       "templateUrl": "test-contracts-go.appspot.com/stevens-mutual.hbs",
       "status": "complete",
-      "creator": "userOne",
-      "admin": "userTwo",
-      "companyContact": "userThree",
+      "creatorId": "userOne",
+      "adminId": "userTwo",
+      "companyContactId": "userThree",
       "createdAt": ""
     }
   },
@@ -49,7 +49,7 @@
       "name": "Company One",
       "type": "LLC",
       "state": "NY",
-      "location": {
+      "_location": {
         "addressCountry": "",
         "addressLocality": "",
         "addressRegion": "",
@@ -65,7 +65,7 @@
       "name": "Company Two",
       "type": "LLC",
       "state": "NJ",
-      "location": {
+      "_location": {
         "addressCountry": "",
         "addressLocality": "",
         "addressRegion": "",

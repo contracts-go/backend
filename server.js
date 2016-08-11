@@ -27,7 +27,7 @@ const express = require('express');
 const app = express();
 // Other necessary functions
 const utils = require('./lib/utils');
-require('./lib/templates/templates');
+const emailTemplater = require('./lib/email-templates/email-templates');
 
 // Create the tmp directory to store the ndas for emailing
 if (!fs.existsSync('./tmp')) {
@@ -126,18 +126,27 @@ app.get('/', (req, res) => {
  */
 app.post('/email', (req, res) => {
   const data = req.body;
-  const docId = data.document; // eslint-disable-line no-unused-vars
+  const docId = data.document;
   const senderId = data.sender;
   const recipientId = data.recipient;
-
+  const emailTemplate = data.template;
   // Start with getting the document
   let doc;
   let sender;
   let recipient;
+  let company;
+  let docxFile;
+
+  // This needs to be greatly reduced in db calls
   Document.getById(docId)
     .then((docObj) => {
       doc = docObj;
       logger.debug('Got Document');
+      // For now we will just fetch all the data about the document
+      return doc.fetchData();
+    })
+    .then(() => {
+      // Got all the data for the document
       return User.getById(senderId);
     })
     .then((senderObj) => {
@@ -161,62 +170,49 @@ app.post('/email', (req, res) => {
         });
       }
       // If we've made it this far --> We're all good to build the document!
-      const html = doc.generateHtml();
-      logger.debug(html);
-      res.status(201).send("Gotcha");
+      return doc.generateDocx();
+    })
+    .then((docx) => {
+      return utils.createDocxFile(docx);
+    })
+    .then((file) => {
+      docxFile = file;
+      const mailHtml = utils.generateMailHtml(
+        emailTemplate,
+        sender,
+        recipient,
+        doc.companyContact.company,
+        doc
+      );
+      // Email it
+      return utils.sendMail({
+        to: recipient.email,
+        subject: `Contract from ${sender.name}`,
+        cc: sender.email,
+        html: mailHtml,
+        attachments: [
+          {
+            filename: `${doc.title}.docx`,
+            content: fs.createReadStream(docxFile.path),
+          },
+        ],
+      });
+    })
+    .then(() => {
+      // Done with file, remove it
+      if (docxFile) {
+        fs.unlink(docxFile.path);
+      }
+      res.status(201).send({message: 'Sent!'});
     })
     .catch((error) => {
+      // Equally so done with file, remove it
+      if (docxFile) {
+        fs.unlink(docxFile.path);
+      }
       logger.log('error', error);
       res.status(error.status | 500).send({ message: error.message });
     });
-
-    /*
-    // Generate doc
-    const docxBuf = nda.generateDocx();
-    // Save doc to temp file
-    // Create a .docx temporary file
-    const tempFileName = `./tmp/nda-${(new Date()).toISOString()}.docx`;
-    const docFile = fs.createWriteStream(tempFileName);
-    const docxAttachmentName = `nda-${nda.pi.name}-${(new Date()).toDateString()}.docx`;
-    docFile.once('open', () => {
-      docFile.write(docxBuf);
-      docFile.end();
-    });
-
-    // Email to recipient
-    docFile.on('close', () => {
-      sendMail({
-        to: emailToUser.email,
-        subject: `New NDA Request from ${data.pi.name}`,
-        cc: nda.pi.email,
-        html: emailTemplater['new-nda']({
-          company: nda.company,
-          pi: nda.pi,
-          project: nda.project,
-          nda,
-          supportEmail: 'contractsgo@gmail.com',
-          emailToUser,
-        }),
-        attachments: [
-          {
-            filename: docxAttachmentName,
-            content: fs.createReadStream(docFile.path),
-          },
-        ],
-      }).then(() => {
-        // Success. Delete the file
-        logger.log('debug', 'Sent email');
-        fs.unlinkSync(docFile.path);
-        res.status(200).send({ status: 'Sent' });
-      }).catch((error) => {
-        // Error. Log The error and Delete the file
-        fs.unlinkSync(docFile.path);
-        throw error;  // Sends error to handler
-      });
-    }, (errorObj) => {
-      throw new Error(errorObj);
-    });
-  });*/
 });
 
 // Error handling must be put at the end (?)

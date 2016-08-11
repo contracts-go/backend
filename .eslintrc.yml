@@ -12,3 +12,8 @@ rules:
   no-console: 0
 #  Sometimes ya just gotta use them. Sorry @airbnb
   no-trailing-spaces: 1
+  arrow-body-style: 0
+  no-underscore-dangle:
+    - 2
+    - allowAfterThis: true
+
