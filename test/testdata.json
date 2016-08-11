@@ -1,80 +1,79 @@
 {
-  "documents": {
-    "title": "Test Document",
-    "documentOne": {
-      "type": "mutual",
-      "project": {
-        "industry": "doughnuts",
-        "description": "making better doughnuts"
-      },
-      "date": "2016-08-10T18:38:16.655Z",
-      "patchUrl": "",
-      "templateUrl": "test-contracts-go.appspot.com/stevens-mutual.hbs",
-      "status": "complete",
-      "creatorId": "userOne",
-      "adminId": "userTwo",
-      "companyContactId": "userThree",
-      "createdAt": ""
-    }
-  },
-  "users": {
-    "userOne": {
-      "email": "userOne@test.com",
-      "name": "User One",
-      "type": "pi",
-      "company": "companyOne",
-      "documents": [
-        "documentOne"
-      ]
-    },
-    "userTwo": {
-      "email": "userTwo@test.com",
-      "name": "User Two",
-      "type": "pi",
-      "company": "companyOne",
-      "documents": [
-        "documentOne"
-      ]
-    },
-    "userThree": {
-      "email": "userThree@test.com",
-      "name": "User Three",
-      "type": "admin",
-      "company": "companyTwo",
-      "documents": []
-    }
-  },
   "companies": {
     "companyOne": {
-      "name": "Company One",
-      "type": "LLC",
-      "state": "NY",
-      "_location": {
-        "addressCountry": "",
-        "addressLocality": "",
-        "addressRegion": "",
-        "postalCode": "",
-        "streetAddress": ""
+      "location": {
+        "addressCountry": "USA",
+        "addressLocality": "Hoboken",
+        "addressRegion": "NJ",
+        "postalCode": "07030",
+        "streetAddress": "1 Castle Point Terrace"
       },
+      "name": "Stevens",
+      "state": "NJ",
+      "type": "LLC",
       "users": [
         "userOne",
         "userTwo"
       ]
     },
     "companyTwo": {
-      "name": "Company Two",
-      "type": "LLC",
-      "state": "NJ",
-      "_location": {
-        "addressCountry": "",
-        "addressLocality": "",
-        "addressRegion": "",
-        "postalCode": "",
-        "streetAddress": ""
+      "location": {
+        "addressCountry": "USA",
+        "addressLocality": "Hoboken",
+        "addressRegion": "NJ",
+        "postalCode": "07030",
+        "streetAddress": "104 14th Street"
       },
+      "name": "Austin's Monkeys",
+      "state": "DE",
+      "type": "LLC",
       "users": [
         "userThree"
       ]
+    }
+  },
+  "documents": {
+    "documentOne": {
+      "admin": "userTwo",
+      "companyContact": "userThree",
+      "createdAt": "",
+      "creator": "userOne",
+      "date": "2016-08-10T18:38:16.655Z",
+      "patchFile": "",
+      "project": {
+        "description": "making better doughnuts",
+        "industry": "doughnuts"
+      },
+      "status": "pending",
+      "templateFile": "stevens-mutual.hbs",
+      "title": "World Peace",
+      "type": "mutual"
+    }
+  },
+  "users": {
+    "userOne": {
+      "company": "companyTwo",
+      "documents": [
+        "documentOne"
+      ],
+      "email": "austin.cawley@gmail.com",
+      "name": "Austin Cawley",
+      "type": "pi"
+    },
+    "userThree": {
+      "company": "companyTwo",
+      "email": "austin.cawley@gmail.com",
+      "name": "David Peacock",
+      "type": "admin"
+    },
+    "userTwo": {
+      "company": "companyOne",
+      "documents": [
+        "documentOne"
+      ],
+      "email": "austin.cawley@gmail.com",
+      "name": "Fran Bueti",
+      "type": "pi"
     }
   }
 }

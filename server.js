@@ -122,7 +122,7 @@ app.get('/', (req, res) => {
  *              type: string
  *              description: 'Message about which property was not found in the database.'
  */
-app.post('/email', (req, res) => {
+app.post('/email', (req, res, next) => {
   const data = req.body;
   const docId = data.document;
   const senderId = data.sender;
@@ -135,6 +135,10 @@ app.post('/email', (req, res) => {
   let docxFile;
 
   // This needs to be greatly reduced in db calls
+  /*
+   Todo: Ways to make faster:
+   - if sending to self --> only need to query for one user
+   */
   Document.getById(docId)
     .then((docObj) => {
       doc = docObj;
@@ -181,11 +185,13 @@ app.post('/email', (req, res) => {
         doc.companyContact.company,
         doc
       );
+      // don't cc when sending to self
+      const cc = (recipient.email === sender.email ? '' : sender.email);
       // Email it
       return utils.sendMail({
         to: recipient.email,
         subject: `Contract from ${sender.name}`,
-        cc: sender.email,
+        cc,
         html: mailHtml,
         attachments: [
           {
@@ -207,8 +213,8 @@ app.post('/email', (req, res) => {
       if (docxFile) {
         fs.unlink(docxFile.path);
       }
-      logger.log('error', error);
-      res.status(error.status | 500).send({ message: error.message });
+      // Handle the error down
+      next(error);
     });
 });
 

@@ -18,6 +18,7 @@ describe('Basic Email', () => {
         document: 'documentOne',
         sender: 'userOne',
         recipient: 'userThree',
+        template: 'toAdmin',
       })
       .end((err, res) => {
         res.should.be.ok; // eslint-disable-line
