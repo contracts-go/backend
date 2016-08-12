@@ -7,7 +7,7 @@ os:
 # The testing env doesn't need a firebase creds file
 before_install:
   - echo -e '{"development":{"mail":{"username":"contractsgo@gmail.com","password":"$CI_MAIL_PASSWORD"}},"production":{"mail":{"username":"contractsgo@gmail.com","password":"$CI_MAIL_PASSWORD"}}}' >> ./config/private.config.json
-  - echo '' >> ./config/private.firebaseCreds.json
+  - echo '{}' >> ./config/private.firebaseCreds.json
 install:
   - npm install
 script:
