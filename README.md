@@ -1,7 +1,7 @@
 # Contracts Go Backend 
 The main functionality for this server is not to manipulate data but to 
 handle the stuffs we can't do on the frontend.  
-Right now, that consists of only sending emails and generating .docx files.  
+Right now, that consists solely of sending emails and generating .docx files.  
 
 Glamorous.
 

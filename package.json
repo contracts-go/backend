@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "pretest": "export CONTACTS_ENV=testing",
+    "pretest": "export CONTRACTS_ENV=testing",
     "test": "node_modules/.bin/mocha",
     "lint": "node_modules/.bin/eslint .",
     "start": "node server.js",
