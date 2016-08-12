@@ -28,6 +28,7 @@ function configuration(env) {
     }
     case 'testing': {
       config = config.development;
+      config.env = 'testing'; // Manual overwrite, better than a whole new obj
       privateConfig = privateConfig.development;
       config.databaseURL = 'ws://dummy.firebaseio.test:5001';
       firebaseCreds = {
