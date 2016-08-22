@@ -30,6 +30,7 @@ function configuration(env) {
       config = config.development;
       config.env = 'testing'; // Manual overwrite, better than a whole new obj
       privateConfig = privateConfig.development;
+      // Configure a fake connection to firebase
       config.databaseURL = 'ws://dummy.firebaseio.test:5001';
       firebaseCreds = {
         private_key: 'fake',

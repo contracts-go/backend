@@ -2,8 +2,8 @@
  * Created by austin on 8/5/16.
  */
 
-require('./fake-firebase');
-const server = require('../server');
+require('../fake-firebase');
+const server = require('../../server');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 chai.should();

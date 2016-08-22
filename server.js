@@ -77,6 +77,68 @@ app.get('/', (req, res) => {
 });
 
 /**
+ * Get the document by id
+ * Path
+ * Send back text
+ */
+app.put('/document/:id', (req, res, next) => {
+  const docId = req.params.id;
+  const userId = req.body.user;
+
+  User.getById(userId)
+    .then((user) => {
+      // Check if the document
+      if (!user.hasAccess(docId)) {
+        throw new errors.UnauthorizedError({
+          user: userId,
+          action: `access the document:${docId}`,
+        });
+      }
+      return Document.getById(docId);
+    })
+    .then((doc) => {
+      // Generate the doc to send back
+      return doc.generate();
+    })
+    .then((text) => {
+      res.status(200).send({ text });
+    })
+    .catch((error) => {
+      // Handle the error down
+      next(error);
+    });
+});
+
+app.patch('/document/:id', (req, res, next) => {
+  const docId = req.params.id;
+  const userId = req.body.user;
+  const text = req.body.text;
+
+  User.getById(userId)
+    .then((user) => {
+      // Check if the document
+      if (!user.hasAccess(docId)) {
+        throw new errors.UnauthorizedError({
+          user: userId,
+          action: `access the document:${docId}`,
+        });
+      }
+      return Document.getById(docId);
+    })
+    .then((doc) => {
+      // Generate the doc to send back
+      return doc.patch(text);
+    })
+    .then(() => {
+      res.status(200).send({ message: 'Successfully patched the document.' });
+    })
+    .catch((error) => {
+      // Handle the error down
+      next(error);
+    });
+});
+
+/**
  * @swagger
  * /email:
  *  post:
@@ -91,10 +153,22 @@ app.get('/', (req, res) => {
  *          title: Email Body
  *          type: object
  *          properties:
+ *            sender:
+ *              type: string
+ *              description: |
+ *                A uuid string (from Firebase) for the sending user.
  *            document:
  *              type: string
  *              description: |
  *                A udid string (from Firebase) for the document to be sent.
+ *            recipient:
+ *              type: string
+ *              description: |
+ *                A uuid string (from Firebase) for the recieving user.
+ *            template:
+ *              type: string
+ *              description: |
+ *                The name of the email template {}.
  *    responses:
  *      201:
  *        description: Successfully Sent email
@@ -122,7 +196,7 @@ app.get('/', (req, res) => {
  *              type: string
  *              description: 'Message about which property was not found in the database.'
  */
-app.post('/email', (req, res, next) => {
+app.post('/document/:id/email', (req, res, next) => {
   const data = req.body;
   const docId = data.document;
   const senderId = data.sender;
@@ -224,7 +298,7 @@ if (app.get('env') === 'production') {
   // Error handler
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     logger.error(err);
-    res.status(err.status || 500).send({
+    res.status((err.status || err.statusCode) || 500).send({
       message: err.message,
       error: {}, //  Don't send the stack back
     });
@@ -234,9 +308,9 @@ if (app.get('env') === 'production') {
   // Error handler
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     logger.error(err);
-    res.status(err.status || 500).send({
+    res.status((err.status || err.statusCode) || 500).send({
       message: err.message,
-      error: err.stack,
+      errors: err.stack,
     });
   });
 }
