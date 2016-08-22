@@ -14,11 +14,11 @@ describe('Basic Email', () => {
       text: 'They just ok.',
     });
     mailPromise.then((result) => {
-      console.log('success');
+      console.log(result);
       done();
     })
     .catch((error) => {
-      console.log('error');
+      console.log(error);
       done();
     });
   });
