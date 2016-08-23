@@ -36,7 +36,6 @@
     "express": "^4.14.0",
     "express-winston": "^2.0.0",
     "firebase": "^3.2.1",
-    "fs": "0.0.2",
     "gcloud": "^0.37.0",
     "handlebars": "^4.0.5",
     "handlebars-layout": "^0.1.3",
