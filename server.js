@@ -300,7 +300,7 @@ if (app.get('env') === 'production') {
     logger.error(err);
     res.status((err.status || err.statusCode) || 500).send({
       message: err.message,
-      error: {}, //  Don't send the stack back
+      errors: {}, //  Don't send the stack back
     });
   });
 } else {
