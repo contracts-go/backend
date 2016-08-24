@@ -200,7 +200,7 @@ app.post('/document/:id/email', (req, res, next) => {
   const data = req.body;
   const docId = data.document;
   const senderId = data.sender;
-  const recipientId = data.recipient;
+  const recipientIdOrObj = data.recipient;
   const emailTemplate = data.template;
   // Start with getting the document
   let doc;
@@ -227,7 +227,20 @@ app.post('/document/:id/email', (req, res, next) => {
     .then((senderObj) => {
       sender = senderObj; // The user object from sender
       logger.debug('Got Sender');
-      return User.getById(recipientId);
+
+      // Recipient can either be the company contact or a registered user
+      // company contacts will be passed as objects
+      let prom;
+      if ((typeof recipientIdOrObj) === 'string') {
+        prom = User.getById(recipientIdOrObj);
+      } else {
+        prom = new Promise((fulfill) => {
+          // Just use the passed information
+          fulfill(new User(recipientIdOrObj));
+        });
+      }
+
+      return prom;
     })
     .then((recipientObj) => {
       recipient = recipientObj;
@@ -256,7 +269,7 @@ app.post('/document/:id/email', (req, res, next) => {
         emailTemplate,
         sender,
         recipient,
-        doc.companyContact.company,
+        doc.company,
         doc
       );
       // don't cc when sending to self
